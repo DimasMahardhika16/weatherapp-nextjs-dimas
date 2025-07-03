@@ -4,27 +4,44 @@ import { useEffect, useState } from "react";
 import Search from "../Search/Search";
 import styles from "./Weatherapp.module.css";
 
+interface WeatherData {
+  name: string;
+  sys: {
+    country: string;
+  };
+  main: {
+    temp: number;
+    humidity: number;
+  };
+  weather: { description: string }[];
+  wind: {
+    speed: number;
+  };
+}
+
 export default function Weather() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
-  const [weatherData, setWeatherData] = useState<any>(null);
+  const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
 
   const fetchWeatherData = async (city: string) => {
     if (!city) return;
+
     setLoading(true);
+    setWeatherData(null);
 
     try {
-      const response = await fetch(`/api/weather?city=${city}`);
-      const data = await response.json();
+      const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+      const data = await res.json();
 
-      if (response.ok) {
-        setWeatherData(data);
-      } else {
+      if (!res.ok) {
         console.error("API error:", data);
-        setWeatherData(null);
+        return;
       }
-    } catch (err) {
-      console.error("Failed to fetch weather data:", err);
+
+      setWeatherData(data);
+    } catch (error) {
+      console.error("Fetch failed:", error);
     } finally {
       setLoading(false);
     }
@@ -35,13 +52,13 @@ export default function Weather() {
   }, []);
 
   const handleSearch = () => {
-    if (search.trim() !== "") {
+    if (search.trim()) {
       fetchWeatherData(search.trim());
     }
   };
 
   const getCurrentDate = () =>
-    new Date().toLocaleDateString("en-us", {
+    new Date().toLocaleDateString("en-US", {
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -62,28 +79,28 @@ export default function Weather() {
         <div>
           <div className={styles.cityName}>
             <h2>
-              {weatherData.name}, <span>{weatherData.sys?.country}</span>
+              {weatherData.name}, <span>{weatherData.sys.country}</span>
             </h2>
           </div>
 
           <div className={styles.date}>{getCurrentDate()}</div>
 
           <div className={styles.temp}>
-            {Math.round(weatherData.main?.temp)}°C
+            {Math.round(weatherData.main.temp)}°C
           </div>
 
           <p className={styles.description}>
-            {weatherData.weather?.[0]?.description ?? ""}
+            {weatherData.weather[0]?.description ?? "No description"}
           </p>
 
           <div className={styles.weatherInfo}>
             <div className={styles.column}>
-              <p className={styles.wind}>{weatherData.wind?.speed} m/s</p>
+              <p className={styles.wind}>{weatherData.wind.speed} m/s</p>
               <p>Wind Speed</p>
             </div>
 
             <div className={styles.column}>
-              <p className={styles.humidity}>{weatherData.main?.humidity}%</p>
+              <p className={styles.humidity}>{weatherData.main.humidity}%</p>
               <p>Humidity</p>
             </div>
           </div>
