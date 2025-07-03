@@ -9,41 +9,44 @@ export default function Weather() {
   const [loading, setLoading] = useState(false);
   const [weatherData, setWeatherData] = useState<any>(null);
 
-  async function fetchWeatherData(city: string) {
+  const fetchWeatherData = async (city: string) => {
+    if (!city) return;
     setLoading(true);
+
     try {
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=13134a89ce77e48795f88b9be704ee20&units=metric`
-      );
+      const response = await fetch(`/api/weather?city=${city}`);
       const data = await response.json();
-      if (data) {
+
+      if (response.ok) {
         setWeatherData(data);
+      } else {
+        console.error("API error:", data);
+        setWeatherData(null);
       }
     } catch (err) {
       console.error("Failed to fetch weather data:", err);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
     fetchWeatherData("Tokyo");
   }, []);
 
-  function handleSearch() {
+  const handleSearch = () => {
     if (search.trim() !== "") {
-      fetchWeatherData(search);
+      fetchWeatherData(search.trim());
     }
-  }
+  };
 
-  function getCurrentDate() {
-    return new Date().toLocaleDateString("en-us", {
+  const getCurrentDate = () =>
+    new Date().toLocaleDateString("en-us", {
       weekday: "long",
       month: "long",
       day: "numeric",
       year: "numeric",
     });
-  }
 
   return (
     <div className={styles.app}>
@@ -52,6 +55,7 @@ export default function Weather() {
         setSearch={setSearch}
         handleSearch={handleSearch}
       />
+
       {loading ? (
         <div className={styles.loading}>Loading Data...</div>
       ) : weatherData ? (
@@ -61,25 +65,26 @@ export default function Weather() {
               {weatherData.name}, <span>{weatherData.sys?.country}</span>
             </h2>
           </div>
+
           <div className={styles.date}>{getCurrentDate()}</div>
+
           <div className={styles.temp}>
             {Math.round(weatherData.main?.temp)}°C
           </div>
+
           <p className={styles.description}>
             {weatherData.weather?.[0]?.description ?? ""}
           </p>
+
           <div className={styles.weatherInfo}>
             <div className={styles.column}>
-              <div>
-                <p className={styles.wind}>{weatherData.wind?.speed} m/s</p>
-                <p>Wind Speed</p>
-              </div>
+              <p className={styles.wind}>{weatherData.wind?.speed} m/s</p>
+              <p>Wind Speed</p>
             </div>
+
             <div className={styles.column}>
-              <div>
-                <p className={styles.humidity}>{weatherData.main?.humidity}%</p>
-                <p>Humidity</p>
-              </div>
+              <p className={styles.humidity}>{weatherData.main?.humidity}%</p>
+              <p>Humidity</p>
             </div>
           </div>
         </div>
